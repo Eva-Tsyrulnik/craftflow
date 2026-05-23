@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+/** Навигация по экранам §9.1 (Web) */
 const NAV_LINKS = [
-  { href: "/catalog", label: "Найти мастера" },
-  { href: "/dashboard", label: "Мои заказы" },
+  { href: "/catalog", label: "Каталог" },
+  { href: "/orders", label: "Мои заказы" },
+  { href: "/dashboard", label: "Дашборд" },
   { href: "/onboarding", label: "Стать мастером" },
 ];
 
