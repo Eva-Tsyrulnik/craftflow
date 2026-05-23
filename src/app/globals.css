@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+/* ── CraftFlow Design Tokens (§12) ─────────────────────────────────── */
+:root {
+  /* Colors */
+  --cf-bg:          #FAF8F5;
+  --cf-bg-card:     #F0EDE8;
+  --cf-primary:     #2D2D2D;
+  --cf-accent:      #E8855A;
+  --cf-accent-hover:#D9714A;
+  --cf-text:        #1A1A1A;
+  --cf-text-muted:  #6B6560;
+  --cf-border:      #E5E0D8;
+
+  /* shadcn/ui CSS variable aliases */
+  --background:     var(--cf-bg);
+  --foreground:     var(--cf-text);
+  --card:           var(--cf-bg-card);
+  --card-foreground:var(--cf-text);
+  --primary:        var(--cf-primary);
+  --primary-foreground: #FAF8F5;
+  --accent:         var(--cf-accent);
+  --accent-foreground: #FAF8F5;
+  --muted:          var(--cf-bg-card);
+  --muted-foreground: var(--cf-text-muted);
+  --border:         var(--cf-border);
+  --input:          var(--cf-border);
+  --ring:           var(--cf-accent);
+  --radius:         0.5rem;
+}
+
+@theme inline {
+  --color-background:       var(--cf-bg);
+  --color-foreground:       var(--cf-text);
+  --color-card:             var(--cf-bg-card);
+  --color-primary:          var(--cf-primary);
+  --color-accent:           var(--cf-accent);
+  --color-muted:            var(--cf-bg-card);
+  --color-muted-foreground: var(--cf-text-muted);
+  --color-border:           var(--cf-border);
+  --font-sans:              var(--font-inter);
+  --font-display:           var(--font-playfair);
+}
+
+/* ── Base ──────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  border-color: var(--cf-border);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--cf-bg);
+  color: var(--cf-text);
+  font-family: var(--font-inter, 'Inter', system-ui, sans-serif);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typography ────────────────────────────────────────────────────── */
+h1, h2, h3 {
+  font-family: var(--font-playfair, 'Playfair Display', Georgia, serif);
+  color: var(--cf-primary);
+  line-height: 1.25;
+}
+
+h4, h5, h6 {
+  font-family: var(--font-inter, 'Inter', system-ui, sans-serif);
+  font-weight: 600;
+  color: var(--cf-primary);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
