@@ -27,6 +27,12 @@
   --input:          var(--cf-border);
   --ring:           var(--cf-accent);
   --radius:         0.5rem;
+  --secondary:      var(--cf-bg-card);
+  --secondary-foreground: var(--cf-text);
+  --destructive:    #c53030;
+  --destructive-foreground: #FAF8F5;
+  --popover:        var(--cf-bg);
+  --popover-foreground: var(--cf-text);
 }
 
 @theme inline {

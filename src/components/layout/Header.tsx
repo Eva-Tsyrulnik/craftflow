@@ -1,72 +1,141 @@
+"use client";
+
 import Link from "next/link";
+import { Menu } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
-/** Навигация по экранам §9.1 (Web) */
 const NAV_LINKS = [
+  { href: "/", label: "Главная" },
   { href: "/catalog", label: "Каталог" },
   { href: "/orders", label: "Мои заказы" },
   { href: "/dashboard", label: "Дашборд" },
-  { href: "/onboarding", label: "Стать мастером" },
+  { href: "/profile", label: "Профиль" },
 ];
 
 export function Header() {
+  const router = useRouter();
+  const { user, loading, supabase } = useAuth();
+  const [open, setOpen] = useState(false);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    setOpen(false);
+    router.push("/");
+    router.refresh();
+  }
+
+  const authBlock = loading ? null : user ? (
+    <>
+      <span className="hidden max-w-[140px] truncate text-sm text-muted-foreground lg:inline">
+        {user.email}
+      </span>
+      <Button variant="outline" size="sm" type="button" onClick={handleSignOut}>
+        Выйти
+      </Button>
+    </>
+  ) : (
+    <>
+      <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+        <Link href="/login">Войти</Link>
+      </Button>
+      <Button
+        size="sm"
+        asChild
+        className="bg-accent text-accent-foreground hover:bg-accent/90"
+      >
+        <Link href="/signup">Регистрация</Link>
+      </Button>
+    </>
+  );
+
   return (
     <header
       className={cn(
         "sticky top-0 z-50 w-full",
-        "bg-[#FAF8F5]/95 backdrop-blur-sm",
-        "border-b border-[#E5E0D8]"
+        "bg-background/95 backdrop-blur-sm",
+        "border-b border-border"
       )}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <span
-            style={{ fontFamily: "var(--font-playfair, 'Playfair Display', Georgia, serif)" }}
-            className="text-xl font-bold text-[#2D2D2D] tracking-tight"
-          >
-            Craft
-          </span>
-          <span
-            style={{ fontFamily: "var(--font-playfair, 'Playfair Display', Georgia, serif)" }}
-            className="text-xl font-bold text-[#E8855A]"
-          >
-            Flow
-          </span>
-        </Link>
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-2">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0 sm:hidden"
+                aria-label="Открыть меню"
+              >
+                <Menu className="size-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[min(100%,280px)]">
+              <SheetHeader>
+                <SheetTitle className="text-left font-display">CraftFlow</SheetTitle>
+              </SheetHeader>
+              <nav className="mt-6 flex flex-col gap-1">
+                {NAV_LINKS.map((link) => (
+                  <Button
+                    key={link.href}
+                    variant="ghost"
+                    className="justify-start"
+                    asChild
+                    onClick={() => setOpen(false)}
+                  >
+                    <Link href={link.href}>{link.label}</Link>
+                  </Button>
+                ))}
+                <div className="my-4 border-t border-border" />
+                {user ? (
+                  <Button variant="outline" className="justify-start" onClick={handleSignOut}>
+                    Выйти
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="ghost" className="justify-start" asChild onClick={() => setOpen(false)}>
+                      <Link href="/login">Войти</Link>
+                    </Button>
+                    <Button
+                      className="justify-start bg-accent text-accent-foreground hover:bg-accent/90"
+                      asChild
+                      onClick={() => setOpen(false)}
+                    >
+                      <Link href="/signup">Регистрация</Link>
+                    </Button>
+                  </>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
 
-        {/* Nav */}
-        <nav className="hidden md:flex items-center gap-6">
+          <Link href="/" className="flex shrink-0 items-center gap-0.5">
+            <span className="font-display text-xl font-bold tracking-tight text-primary">
+              Craft
+            </span>
+            <span className="font-display text-xl font-bold text-accent">Flow</span>
+          </Link>
+        </div>
+
+        <nav className="hidden items-center gap-1 sm:flex sm:gap-2">
           {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-[#6B6560] hover:text-[#2D2D2D] transition-colors"
-            >
-              {link.label}
-            </Link>
+            <Button key={link.href} variant="ghost" size="sm" asChild>
+              <Link href={link.href}>{link.label}</Link>
+            </Button>
           ))}
         </nav>
 
-        {/* Auth buttons */}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="text-sm font-medium text-[#6B6560] hover:text-[#2D2D2D] transition-colors"
-          >
-            Войти
-          </Link>
-          <Link
-            href="/signup"
-            className={cn(
-              "rounded-lg px-4 py-2 text-sm font-medium",
-              "bg-[#E8855A] text-white hover:bg-[#D9714A]",
-              "transition-colors"
-            )}
-          >
-            Регистрация
-          </Link>
-        </div>
+        <div className="hidden items-center gap-2 sm:flex">{authBlock}</div>
       </div>
     </header>
   );

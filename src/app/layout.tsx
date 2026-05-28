@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <body>
         <AppShell>{children}</AppShell>
+        <Toaster position="top-center" />
       </body>
     </html>
   );

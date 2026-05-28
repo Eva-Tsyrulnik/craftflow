@@ -1,0 +1,9 @@
+# CraftFlow — Supabase CLI (миграции через `npm run db:push`)
+
+project_id = "uaheyneplvflwsyyfwhe"
+
+[api]
+enabled = true
+
+[db]
+major_version = 17
