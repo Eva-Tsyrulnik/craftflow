@@ -1,6 +1,11 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
+import {
+  getSupabaseUrlHint,
+  isValidSupabaseProjectUrl,
+  normalizeSupabaseProjectUrl,
+} from "@/lib/supabase-url";
 
 let runtimeUrl = "";
 let runtimeAnonKey = "";
@@ -21,10 +26,11 @@ export function applySupabaseEnv(url?: string, anonKey?: string) {
   browserClientKey = "";
 }
 
+export { normalizeSupabaseProjectUrl } from "@/lib/supabase-url";
+
 function resolveConfig() {
-  const url = trimEnv(runtimeUrl || process.env.NEXT_PUBLIC_SUPABASE_URL).replace(
-    /\/$/,
-    ""
+  const url = normalizeSupabaseProjectUrl(
+    runtimeUrl || process.env.NEXT_PUBLIC_SUPABASE_URL || ""
   );
   const anonKey = trimEnv(runtimeAnonKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   return { url, anonKey };
@@ -39,29 +45,18 @@ function isValidAnonKey(key: string): boolean {
   return false;
 }
 
-function isValidProjectUrl(url: string): boolean {
-  try {
-    const u = new URL(url);
-    return u.protocol === "https:" && u.hostname.endsWith(".supabase.co");
-  } catch {
-    return false;
-  }
-}
-
 export function isSupabaseConfigured(): boolean {
   const { url, anonKey } = resolveConfig();
-  return isValidProjectUrl(url) && isValidAnonKey(anonKey);
+  return isValidSupabaseProjectUrl(url) && isValidAnonKey(anonKey);
 }
 
 /** Для баннера: что именно не так (без вывода секретов). */
 export function getSupabaseConfigHint(): string {
+  const rawUrl = trimEnv(runtimeUrl || process.env.NEXT_PUBLIC_SUPABASE_URL);
   const { url, anonKey } = resolveConfig();
-  if (!url) {
-    return "NEXT_PUBLIC_SUPABASE_URL пустой на сервере. После добавления env в Vercel сделайте Redeploy без кэша.";
-  }
-  if (!isValidProjectUrl(url)) {
-    return "NEXT_PUBLIC_SUPABASE_URL должен быть https://xxxx.supabase.co (не postgres:// и без кавычек).";
-  }
+
+  const urlHint = getSupabaseUrlHint(rawUrl, url);
+  if (urlHint) return urlHint;
   if (!anonKey) {
     return "NEXT_PUBLIC_SUPABASE_ANON_KEY пустой. Возьмите anon / publishable key в Supabase → Settings → API.";
   }
