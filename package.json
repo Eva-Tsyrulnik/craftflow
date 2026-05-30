@@ -12,7 +12,8 @@
     "db:seed": "supabase db query --file supabase/sql/seed_from_auth.sql --linked",
     "db:auth-users": "supabase db query --file supabase/sql/list_auth_users.sql --linked",
     "db:rls": "supabase db query --file supabase/sql/enable_rls.sql --linked",
-    "db:grants": "supabase db query --file supabase/sql/grant_api_roles.sql --linked"
+    "db:grants": "supabase db query --file supabase/sql/grant_api_roles.sql --linked",
+    "hero:assets": "node scripts/process-hero.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -36,6 +37,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "sharp": "^0.34.5",
     "supabase": "^2.101.0",
     "tailwindcss": "^4",
     "typescript": "^5"

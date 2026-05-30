@@ -171,11 +171,19 @@ export function ClientOrdersPage() {
         <ErrorState message={error} onRetry={load} />
       ) : (
         <Tabs defaultValue="active">
-          <TabsList className="mb-6 grid w-full grid-cols-2 sm:w-auto sm:grid-cols-none">
-            <TabsTrigger value="active" disabled={loading || authLoading}>
+          <TabsList className="mb-6 box-border flex h-10 w-full divide-x divide-border overflow-hidden rounded-lg border border-border bg-muted p-0 sm:w-auto">
+            <TabsTrigger
+              value="active"
+              disabled={loading || authLoading}
+              className="h-full min-h-0 flex-1 rounded-none px-4 shadow-none data-[state=active]:shadow-none sm:min-w-[7.5rem] sm:flex-none"
+            >
               Активные
             </TabsTrigger>
-            <TabsTrigger value="completed" disabled={loading || authLoading}>
+            <TabsTrigger
+              value="completed"
+              disabled={loading || authLoading}
+              className="h-full min-h-0 flex-1 rounded-none px-4 shadow-none data-[state=active]:shadow-none sm:min-w-[7.5rem] sm:flex-none"
+            >
               Завершённые
             </TabsTrigger>
           </TabsList>

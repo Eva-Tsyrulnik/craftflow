@@ -20,7 +20,14 @@ import { cn } from "@/lib/utils";
 const PUBLIC_LINKS = [
   { href: "/", label: "Главная" },
   { href: "/catalog", label: "Каталог" },
-];
+] as const;
+
+/** Декоративные пункты меню (без перехода, только hover) */
+const DECORATIVE_NAV = [
+  "Как это работает",
+  "Отзывы",
+  "Гарантии",
+] as const;
 
 const AUTHENTICATED_LINKS = [
   { href: "/orders", label: "Мои заказы" },
@@ -35,7 +42,20 @@ export function Header() {
 
   const navLinks = user
     ? [...PUBLIC_LINKS, ...AUTHENTICATED_LINKS]
-    : PUBLIC_LINKS;
+    : [...PUBLIC_LINKS];
+
+  const decorativeNav = (
+    <>
+      {DECORATIVE_NAV.map((label) => (
+        <span
+          key={label}
+          className="inline-flex cursor-default items-center rounded-md px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+        >
+          {label}
+        </span>
+      ))}
+    </>
+  );
 
   async function handleSignOut() {
     await tryGetSupabase()?.auth.signOut();
@@ -110,6 +130,14 @@ export function Header() {
                     <Link href={link.href}>{link.label}</Link>
                   </Button>
                 ))}
+                {DECORATIVE_NAV.map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    {label}
+                  </span>
+                ))}
                 <div className="my-4 border-t border-border" />
                 {loading ? (
                   <Skeleton className="h-9 w-full" />
@@ -143,12 +171,13 @@ export function Header() {
           </Link>
         </div>
 
-        <nav className="hidden items-center gap-1 sm:flex sm:gap-2">
+        <nav className="hidden items-center gap-0.5 md:flex">
           {navLinks.map((link) => (
             <Button key={link.href} variant="ghost" size="sm" asChild>
               <Link href={link.href}>{link.label}</Link>
             </Button>
           ))}
+          {decorativeNav}
         </nav>
 
         <div className="hidden items-center gap-2 sm:flex">{authBlock}</div>

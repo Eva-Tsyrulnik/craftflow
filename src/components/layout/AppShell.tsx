@@ -7,7 +7,7 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-[#FAF8F5] flex flex-col">
+    <div className="bg-craft-pattern flex min-h-screen flex-col">
       <SupabaseEnvBanner />
       <Header />
       <main className="flex-1">{children}</main>

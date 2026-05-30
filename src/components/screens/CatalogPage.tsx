@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
+import { HeroBackground } from "@/components/shared/HeroBackground";
 import { CatalogGridSkeleton } from "@/components/shared/ListSkeletons";
 import { PageHeading } from "@/components/shared/PageHeading";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -86,7 +87,9 @@ export function CatalogPage() {
   }, [masters, search, category]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="relative min-h-full overflow-hidden">
+      <HeroBackground overlayClassName="bg-background/60" />
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <PageHeading
         title="Каталог мастеров"
         description="Мастера из Supabase — обновите страницу после добавления записи в Dashboard"
@@ -174,6 +177,7 @@ export function CatalogPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }
