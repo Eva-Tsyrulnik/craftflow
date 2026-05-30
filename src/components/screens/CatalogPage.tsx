@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { CATEGORY_LABELS, formatPrice, type MasterCategory } from "@/lib/constants";
-import { tryGetSupabase } from "@/lib/supabase";
+import { formatSupabaseNetworkError, tryGetSupabase } from "@/lib/supabase";
 import { mapMasterRow, type MasterCard } from "@/lib/views";
 
 const FILTER_CATEGORIES: (MasterCategory | "all")[] = [
@@ -45,18 +45,26 @@ export function CatalogPage() {
       return;
     }
 
-    const { data, error: queryError } = await supabase
-      .from("masters")
-      .select("*, users(name)")
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error: queryError } = await supabase
+        .from("masters")
+        .select("*, users(name)")
+        .order("created_at", { ascending: false });
 
-    if (queryError) {
-      console.error(queryError);
-      toast.error(queryError.message);
-      setError(queryError.message);
+      if (queryError) {
+        console.error(queryError);
+        toast.error(queryError.message);
+        setError(queryError.message);
+        setMasters([]);
+      } else {
+        setMasters((data ?? []).map((row) => mapMasterRow(row)));
+      }
+    } catch (err) {
+      const message = formatSupabaseNetworkError(err);
+      console.error(err);
+      toast.error(message);
+      setError(message);
       setMasters([]);
-    } else {
-      setMasters((data ?? []).map((row) => mapMasterRow(row)));
     }
 
     setLoading(false);

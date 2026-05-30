@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DEFAULT_AUTH_REDIRECT } from "@/lib/auth-routes";
 import { getAppUrl } from "@/lib/env";
-import { getSupabase } from "@/lib/supabase";
+import { formatSupabaseNetworkError, tryGetSupabase } from "@/lib/supabase";
 
 export function LoginPage() {
   const router = useRouter();
@@ -32,25 +32,41 @@ export function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const { error: signInError } = await getSupabase().auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    setLoading(false);
-
-    if (signInError) {
-      setError(signInError.message);
+    const supabase = tryGetSupabase();
+    if (!supabase) {
+      setLoading(false);
+      setError("Supabase не настроен. Проверьте переменные окружения на Vercel.");
       return;
     }
 
-    router.push(getRedirectTarget());
-    router.refresh();
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        setError(signInError.message);
+        return;
+      }
+
+      router.push(getRedirectTarget());
+      router.refresh();
+    } catch (err) {
+      setError(formatSupabaseNetworkError(err));
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleOAuth(provider: "google") {
+    const supabase = tryGetSupabase();
+    if (!supabase) {
+      setError("Supabase не настроен.");
+      return;
+    }
     const next = getRedirectTarget();
-    const { error: oauthError } = await getSupabase().auth.signInWithOAuth({
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
         redirectTo: `${getAppUrl()}/auth/callback?next=${encodeURIComponent(next)}`,

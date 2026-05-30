@@ -1,6 +1,19 @@
 "use client";
 
-import { isSupabaseConfigured } from "@/lib/supabase";
+import { applySupabaseEnv, isSupabaseConfigured } from "@/lib/supabase";
+
+export function SupabaseRootProvider({
+  url = "",
+  anonKey = "",
+  children,
+}: {
+  url?: string;
+  anonKey?: string;
+  children: React.ReactNode;
+}) {
+  applySupabaseEnv(url, anonKey);
+  return <>{children}</>;
+}
 
 export function SupabaseEnvBanner() {
   if (isSupabaseConfigured()) {

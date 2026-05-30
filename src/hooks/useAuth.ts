@@ -2,7 +2,7 @@
 
 import type { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
-import { tryGetSupabase } from "@/lib/supabase";
+import { formatSupabaseNetworkError, tryGetSupabase } from "@/lib/supabase";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -15,10 +15,16 @@ export function useAuth() {
       return;
     }
 
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setLoading(false);
-    });
+    supabase.auth
+      .getUser()
+      .then(({ data, error }) => {
+        if (!error) setUser(data.user);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(formatSupabaseNetworkError(err));
+        setLoading(false);
+      });
 
     const {
       data: { subscription },

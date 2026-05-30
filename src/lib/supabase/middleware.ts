@@ -7,9 +7,9 @@ import {
 } from "@/lib/auth-routes";
 
 function getMiddlewareEnv() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/\/$/, "");
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  if (!url || !key || !url.includes(".supabase.co")) return null;
   return { url, key };
 }
 

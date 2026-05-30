@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
+import { SupabaseRootProvider } from "@/components/shared/SupabaseEnvBanner";
 import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
@@ -31,8 +32,13 @@ export default function RootLayout({
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <body>
-        <AppShell>{children}</AppShell>
-        <Toaster position="top-center" />
+        <SupabaseRootProvider
+          url={process.env.NEXT_PUBLIC_SUPABASE_URL}
+          anonKey={process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        >
+          <AppShell>{children}</AppShell>
+          <Toaster position="top-center" />
+        </SupabaseRootProvider>
       </body>
     </html>
   );
