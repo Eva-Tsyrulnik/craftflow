@@ -5,22 +5,39 @@ import {
   isAuthPath,
   isProtectedPath,
 } from "@/lib/auth-routes";
-import type { Database } from "@/lib/database.types";
-import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/env";
+
+function getMiddlewareEnv() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return { url, key };
+}
+
+/** Копирует cookies сессии Supabase при redirect (иначе refresh теряется). */
+function withSessionCookies(target: NextResponse, source: NextResponse) {
+  source.cookies.getAll().forEach((cookie) => {
+    target.cookies.set(cookie.name, cookie.value);
+  });
+  return target;
+}
 
 export async function updateSession(request: NextRequest) {
+  const env = getMiddlewareEnv();
+  if (!env) {
+    // Нет env на Edge (Vercel) — не падаем, публичные страницы открываются
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient<Database>(
-    getSupabaseUrl(),
-    getSupabaseAnonKey(),
-    {
+  try {
+    const supabase = createServerClient(env.url, env.key, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
+          cookiesToSet.forEach(({ name, value, options }) => {
             request.cookies.set(name, value);
           });
           supabaseResponse = NextResponse.next({ request });
@@ -29,32 +46,34 @@ export async function updateSession(request: NextRequest) {
           });
         },
       },
+    });
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { pathname } = request.nextUrl;
+
+    if (!user && isProtectedPath(pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("next", pathname);
+      return withSessionCookies(NextResponse.redirect(url), supabaseResponse);
     }
-  );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    if (user && isAuthPath(pathname)) {
+      const url = request.nextUrl.clone();
+      const next = url.searchParams.get("next");
+      url.pathname =
+        next && next.startsWith("/") && !next.startsWith("//")
+          ? next
+          : DEFAULT_AUTH_REDIRECT;
+      url.search = "";
+      return withSessionCookies(NextResponse.redirect(url), supabaseResponse);
+    }
 
-  const { pathname } = request.nextUrl;
-
-  if (!user && isProtectedPath(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
+    return supabaseResponse;
+  } catch {
+    return NextResponse.next({ request });
   }
-
-  if (user && isAuthPath(pathname)) {
-    const url = request.nextUrl.clone();
-    const next = url.searchParams.get("next");
-    url.pathname =
-      next && next.startsWith("/") && !next.startsWith("//")
-        ? next
-        : DEFAULT_AUTH_REDIRECT;
-    url.search = "";
-    return NextResponse.redirect(url);
-  }
-
-  return supabaseResponse;
 }
