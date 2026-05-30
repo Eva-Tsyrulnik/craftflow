@@ -20,6 +20,9 @@ export function normalizeSupabaseProjectUrl(raw: string): string {
     v = `https://${v}`;
   }
 
+  // Частая ошибка в Vercel: …/rest/v1 или …/auth/v1 в Project URL
+  v = v.replace(/\/rest\/v1\/?$/i, "").replace(/\/auth\/v1\/?$/i, "");
+
   return v;
 }
 
@@ -40,6 +43,9 @@ export function getSupabaseUrlHint(rawUrl: string, normalizedUrl: string): strin
     }
     if (raw.includes("pooler") || raw.includes(".supabase.com")) {
       return "Указан pooler/хост БД. В Vercel вставьте только Project URL: https://uaheyneplvflwsyyfwhe.supabase.co";
+    }
+    if (raw.includes("/rest/v1") || raw.includes("/auth/v1")) {
+      return "Уберите /rest/v1 или /auth/v1 из URL. Нужен только: https://uaheyneplvflwsyyfwhe.supabase.co";
     }
     if (raw) {
       return "URL не распознан. Для CraftFlow: https://uaheyneplvflwsyyfwhe.supabase.co";

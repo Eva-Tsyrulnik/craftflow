@@ -1,12 +1,22 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "@/lib/database.types";
-import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/env";
+import { getSupabaseAnonKey } from "@/lib/env";
+import {
+  isValidSupabaseProjectUrl,
+  normalizeSupabaseProjectUrl,
+} from "@/lib/supabase-url";
 
 export async function createClient() {
   const cookieStore = await cookies();
+  const url = normalizeSupabaseProjectUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "");
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? "";
 
-  return createServerClient<Database>(getSupabaseUrl(), getSupabaseAnonKey(), {
+  if (!isValidSupabaseProjectUrl(url) || !key) {
+    throw new Error("Supabase env не настроены на сервере");
+  }
+
+  return createServerClient<Database>(url, key, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

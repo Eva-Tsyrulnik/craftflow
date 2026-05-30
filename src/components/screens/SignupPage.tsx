@@ -82,7 +82,10 @@ export function SignupPage() {
     const { error: oauthError } = await getSupabase().auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${getAppUrl()}/auth/callback?next=${encodeURIComponent(role === "master" ? "/onboarding" : DEFAULT_AUTH_REDIRECT)}`,
+        redirectTo: new URL(
+          `/auth/callback?next=${encodeURIComponent(role === "master" ? "/onboarding" : DEFAULT_AUTH_REDIRECT)}`,
+          getAppUrl()
+        ).toString(),
       },
     });
     if (oauthError) setError(oauthError.message);

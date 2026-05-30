@@ -69,7 +69,10 @@ export function LoginPage() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${getAppUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
+        redirectTo: new URL(
+          `/auth/callback?next=${encodeURIComponent(next)}`,
+          getAppUrl()
+        ).toString(),
       },
     });
     if (oauthError) setError(oauthError.message);
