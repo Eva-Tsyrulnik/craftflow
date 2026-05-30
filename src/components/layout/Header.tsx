@@ -5,6 +5,7 @@ import { Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sheet,
   SheetContent,
@@ -12,12 +13,16 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/useAuth";
+import { getSupabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
-const NAV_LINKS = [
+const PUBLIC_LINKS = [
   { href: "/", label: "Главная" },
   { href: "/catalog", label: "Каталог" },
+];
+
+const AUTHENTICATED_LINKS = [
   { href: "/orders", label: "Мои заказы" },
   { href: "/dashboard", label: "Дашборд" },
   { href: "/profile", label: "Профиль" },
@@ -25,17 +30,26 @@ const NAV_LINKS = [
 
 export function Header() {
   const router = useRouter();
-  const { user, loading, supabase } = useAuth();
+  const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
 
+  const navLinks = user
+    ? [...PUBLIC_LINKS, ...AUTHENTICATED_LINKS]
+    : PUBLIC_LINKS;
+
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    await getSupabase().auth.signOut();
     setOpen(false);
-    router.push("/");
+    router.push("/login");
     router.refresh();
   }
 
-  const authBlock = loading ? null : user ? (
+  const authBlock = loading ? (
+    <div className="flex items-center gap-2">
+      <Skeleton className="hidden h-8 w-24 lg:block" />
+      <Skeleton className="h-8 w-16" />
+    </div>
+  ) : user ? (
     <>
       <span className="hidden max-w-[140px] truncate text-sm text-muted-foreground lg:inline">
         {user.email}
@@ -85,7 +99,7 @@ export function Header() {
                 <SheetTitle className="text-left font-display">CraftFlow</SheetTitle>
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-1">
-                {NAV_LINKS.map((link) => (
+                {navLinks.map((link) => (
                   <Button
                     key={link.href}
                     variant="ghost"
@@ -97,7 +111,9 @@ export function Header() {
                   </Button>
                 ))}
                 <div className="my-4 border-t border-border" />
-                {user ? (
+                {loading ? (
+                  <Skeleton className="h-9 w-full" />
+                ) : user ? (
                   <Button variant="outline" className="justify-start" onClick={handleSignOut}>
                     Выйти
                   </Button>
@@ -128,7 +144,7 @@ export function Header() {
         </div>
 
         <nav className="hidden items-center gap-1 sm:flex sm:gap-2">
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <Button key={link.href} variant="ghost" size="sm" asChild>
               <Link href={link.href}>{link.label}</Link>
             </Button>

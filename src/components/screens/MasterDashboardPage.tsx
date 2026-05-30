@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { DeleteOrderDialog } from "@/components/orders/DeleteOrderDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { DashboardSkeleton } from "@/components/shared/ListSkeletons";
@@ -11,52 +12,54 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ORDER_STATUS_LABELS, formatPrice } from "@/lib/constants";
+import { buildDefaultStageRows } from "@/lib/order-stages";
 import { getSupabase } from "@/lib/supabase";
 import { mapOrderRow, type OrderCard } from "@/lib/views";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/useAuth";
 
 export function MasterDashboardPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const [orders, setOrders] = useState<OrderCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rejectOrder, setRejectOrder] = useState<OrderCard | null>(null);
+  const [masterId, setMasterId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!user) {
-      setOrders([]);
-      setLoading(false);
-      return;
-    }
+    if (!user) return;
 
     setLoading(true);
     setError(null);
 
     const supabase = getSupabase();
 
-    const masterRes = await supabase
+    const mastersRes = await supabase
       .from("masters")
       .select("id")
       .eq("user_id", user.id)
       .maybeSingle();
-
-    if (masterRes.error) {
-      console.error(masterRes.error);
-      toast.error(masterRes.error.message);
-      setError(masterRes.error.message);
+    if (mastersRes.error) {
+      console.error(mastersRes.error);
+      toast.error(mastersRes.error.message);
+      setError(mastersRes.error.message);
       setLoading(false);
       return;
     }
 
-    if (!masterRes.data) {
+    const mid = mastersRes.data?.id;
+    if (!mid) {
       setOrders([]);
+      setMasterId(null);
       setLoading(false);
       return;
     }
+
+    setMasterId(mid);
 
     const ordersRes = await supabase
       .from("orders")
       .select("*, masters(users(name))")
-      .eq("master_id", masterRes.data.id)
+      .eq("master_id", mid)
       .order("created_at", { ascending: false });
 
     if (ordersRes.error) {
@@ -72,8 +75,8 @@ export function MasterDashboardPage() {
   }, [user]);
 
   useEffect(() => {
-    if (!authLoading) load();
-  }, [authLoading, load]);
+    load();
+  }, [load]);
 
   const pending = useMemo(
     () => orders.filter((o) => o.status === "pending"),
@@ -102,23 +105,57 @@ export function MasterDashboardPage() {
     },
   ];
 
-  if (loading || authLoading) {
+  async function acceptOrder(orderId: string) {
+    if (!masterId) return;
+
+    const supabase = getSupabase();
+
+    const { data, error } = await supabase
+      .from("orders")
+      .update({ status: "active" })
+      .eq("id", orderId)
+      .eq("master_id", masterId)
+      .select("*, masters(users(name))")
+      .single();
+
+    if (error) {
+      console.error(error);
+      toast.error(error.message);
+      return;
+    }
+
+    const { count } = await supabase
+      .from("order_stages")
+      .select("id", { count: "exact", head: true })
+      .eq("order_id", orderId);
+
+    if (count === 0) {
+      const { error: stagesError } = await supabase
+        .from("order_stages")
+        .insert(buildDefaultStageRows(orderId));
+
+      if (stagesError) {
+        console.error(stagesError);
+        toast.error(stagesError.message);
+      }
+    }
+
+    toast.success("Сохранено");
+    setOrders((prev) => prev.map((o) => (o.id === orderId ? mapOrderRow(data) : o)));
+  }
+
+  function handleOrderCancelled(orderId: string) {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled" as const } : o))
+    );
+    setRejectOrder(null);
+  }
+
+  if (loading) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
         <PageHeading title="Дашборд мастера" description="Загрузка…" />
         <DashboardSkeleton />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-        <EmptyState description="Войдите как мастер, чтобы видеть дашборд.">
-          <Button asChild className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90">
-            <Link href="/login">Войти</Link>
-          </Button>
-        </EmptyState>
       </div>
     );
   }
@@ -132,11 +169,23 @@ export function MasterDashboardPage() {
     );
   }
 
+  if (!masterId) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+        <EmptyState description="Создайте профиль мастера в настройках или онбординге.">
+          <Button asChild className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90">
+            <Link href="/onboarding">Онбординг мастера</Link>
+          </Button>
+        </EmptyState>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
       <PageHeading
         title="Дашборд мастера"
-        description="Заявки, активные заказы и статистика из Supabase"
+        description="Заявки, активные заказы и статистика"
       />
 
       <div className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -167,10 +216,20 @@ export function MasterDashboardPage() {
                     {formatPrice(order.budget)} · до {order.deadline}
                   </p>
                   <div className="flex flex-col gap-2 sm:flex-row">
-                    <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="bg-accent text-accent-foreground hover:bg-accent/90"
+                      onClick={() => acceptOrder(order.id)}
+                    >
                       Принять
                     </Button>
-                    <Button size="sm" variant="outline">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setRejectOrder(order)}
+                    >
                       Отклонить
                     </Button>
                   </div>
@@ -205,6 +264,17 @@ export function MasterDashboardPage() {
           </div>
         )}
       </section>
+
+      <DeleteOrderDialog
+        open={Boolean(rejectOrder)}
+        onOpenChange={(open) => !open && setRejectOrder(null)}
+        orderId={rejectOrder?.id ?? ""}
+        orderTitle={rejectOrder?.title ?? ""}
+        mode="master"
+        masterId={masterId}
+        sessionUserId={user?.id}
+        onCancelled={handleOrderCancelled}
+      />
     </div>
   );
 }

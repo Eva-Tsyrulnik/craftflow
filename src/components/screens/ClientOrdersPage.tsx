@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { DeleteOrderDialog } from "@/components/orders/DeleteOrderDialog";
+import { OrderFormDialog } from "@/components/orders/OrderFormDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { OrderCardsSkeleton } from "@/components/shared/ListSkeletons";
@@ -14,23 +16,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ORDER_STATUS_LABELS, formatPrice } from "@/lib/constants";
 import { getSupabase } from "@/lib/supabase";
 import { mapOrderRow, type OrderCard } from "@/lib/views";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/useAuth";
 
 function OrderList({
   orders,
   filter,
   loading,
+  onEdit,
+  onDelete,
 }: {
   orders: OrderCard[];
   filter: "active" | "completed";
   loading: boolean;
+  onEdit: (order: OrderCard) => void;
+  onDelete: (order: OrderCard) => void;
 }) {
   if (loading) {
     return <OrderCardsSkeleton count={3} />;
   }
 
   const filtered = orders.filter((o) =>
-    filter === "completed" ? o.status === "completed" : o.status !== "completed"
+    filter === "completed"
+      ? o.status === "completed"
+      : o.status !== "completed" && o.status !== "cancelled"
   );
 
   if (filtered.length === 0) {
@@ -58,15 +66,32 @@ function OrderList({
               {ORDER_STATUS_LABELS[order.status]}
             </Badge>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <CardContent className="flex flex-col gap-4">
             <div className="text-sm text-muted-foreground">
               <span>{formatPrice(order.budget)}</span>
               <span className="mx-2">·</span>
               <span>до {order.deadline}</span>
             </div>
-            <Button asChild size="sm" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 sm:w-auto">
-              <Link href={`/order/${order.id}`}>Открыть заказ</Link>
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                <Link href={`/order/${order.id}`}>Открыть заказ</Link>
+              </Button>
+              {order.status === "pending" ? (
+                <>
+                  <Button type="button" size="sm" variant="outline" onClick={() => onEdit(order)}>
+                    Редактировать
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => onDelete(order)}
+                  >
+                    Удалить
+                  </Button>
+                </>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
       ))}
@@ -79,14 +104,11 @@ export function ClientOrdersPage() {
   const [orders, setOrders] = useState<OrderCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editOrder, setEditOrder] = useState<OrderCard | null>(null);
+  const [deleteOrder, setDeleteOrder] = useState<OrderCard | null>(null);
 
   const load = useCallback(async () => {
-    if (!user) {
-      setOrders([]);
-      setLoading(false);
-      setError(null);
-      return;
-    }
+    if (!user) return;
 
     setLoading(true);
     setError(null);
@@ -110,8 +132,27 @@ export function ClientOrdersPage() {
   }, [user]);
 
   useEffect(() => {
-    if (!authLoading) load();
-  }, [authLoading, load]);
+    if (!authLoading && user) load();
+    if (!authLoading && !user) setLoading(false);
+  }, [authLoading, user, load]);
+
+  function handleOrderUpdated(updated: OrderCard) {
+    setOrders((prev) => {
+      const idx = prev.findIndex((o) => o.id === updated.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = updated;
+        return next;
+      }
+      return [updated, ...prev];
+    });
+  }
+
+  function handleOrderCancelled(orderId: string) {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled" as const } : o))
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
@@ -139,13 +180,44 @@ export function ClientOrdersPage() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="active">
-            <OrderList orders={orders} filter="active" loading={loading || authLoading} />
+            <OrderList
+              orders={orders}
+              filter="active"
+              loading={loading || authLoading}
+              onEdit={setEditOrder}
+              onDelete={setDeleteOrder}
+            />
           </TabsContent>
           <TabsContent value="completed">
-            <OrderList orders={orders} filter="completed" loading={loading || authLoading} />
+            <OrderList
+              orders={orders}
+              filter="completed"
+              loading={loading || authLoading}
+              onEdit={setEditOrder}
+              onDelete={setDeleteOrder}
+            />
           </TabsContent>
         </Tabs>
       )}
+
+      <OrderFormDialog
+        open={Boolean(editOrder)}
+        onOpenChange={(open) => !open && setEditOrder(null)}
+        mode="edit"
+        order={editOrder ?? undefined}
+        onSuccess={handleOrderUpdated}
+        sessionUserId={user?.id}
+      />
+
+      <DeleteOrderDialog
+        open={Boolean(deleteOrder)}
+        onOpenChange={(open) => !open && setDeleteOrder(null)}
+        orderId={deleteOrder?.id ?? ""}
+        orderTitle={deleteOrder?.title ?? ""}
+        mode="client"
+        sessionUserId={user?.id}
+        onCancelled={handleOrderCancelled}
+      />
     </div>
   );
 }

@@ -10,9 +10,12 @@
     "db:push": "supabase db push",
     "db:status": "supabase migration list",
     "db:seed": "supabase db query --file supabase/sql/seed_from_auth.sql --linked",
-    "db:auth-users": "supabase db query --file supabase/sql/list_auth_users.sql --linked"
+    "db:auth-users": "supabase db query --file supabase/sql/list_auth_users.sql --linked",
+    "db:rls": "supabase db query --file supabase/sql/enable_rls.sql --linked",
+    "db:grants": "supabase db query --file supabase/sql/grant_api_roles.sql --linked"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
     "class-variance-authority": "^0.7.1",
@@ -23,8 +26,10 @@
     "radix-ui": "^1.4.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-hook-form": "^7.76.1",
     "sonner": "^2.0.7",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

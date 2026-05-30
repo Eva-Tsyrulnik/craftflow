@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeading } from "@/components/shared/PageHeading";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/useAuth";
+import { getSupabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { CATEGORY_LABELS, type MasterCategory } from "@/lib/constants";
 
@@ -19,7 +20,7 @@ const CATEGORIES = Object.entries(CATEGORY_LABELS) as [MasterCategory, string][]
 
 export function OnboardingPage() {
   const router = useRouter();
-  const { user, supabase } = useAuth();
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<MasterCategory[]>(["sewing"]);
   const [bio, setBio] = useState("");
@@ -47,7 +48,13 @@ export function OnboardingPage() {
     setSaving(true);
     setError(null);
 
-    await supabase.from("users").update({ role: "master" }).eq("id", user.id);
+    const supabase = getSupabase();
+
+    await supabase.from("users").upsert({
+      id: user.id,
+      name: user.user_metadata?.name ?? user.email?.split("@")[0] ?? "Мастер",
+      role: "master",
+    });
 
     const { error: insertError } = await supabase.from("masters").upsert(
       {

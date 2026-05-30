@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { OrderFormDialog } from "@/components/orders/OrderFormDialog";
+import { useAuth } from "@/hooks/useAuth";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { CatalogGridSkeleton } from "@/components/shared/ListSkeletons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,6 +23,9 @@ interface MasterProfilePageProps {
 }
 
 export function MasterProfilePage({ masterId }: MasterProfilePageProps) {
+  const router = useRouter();
+  const { user } = useAuth();
+  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [master, setMaster] = useState<MasterCard | null>(null);
   const [reviews, setReviews] = useState<ReviewView[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,9 +134,18 @@ export function MasterProfilePage({ masterId }: MasterProfilePageProps) {
             ))}
           </div>
           <p className="mt-4 text-foreground">{master.bio}</p>
-          <Button asChild className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90">
-            <Link href={`/order/new?master=${master.id}`}>Оформить заказ</Link>
-          </Button>
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              className="bg-accent text-accent-foreground hover:bg-accent/90"
+              onClick={() => setOrderDialogOpen(true)}
+            >
+              Быстрый заказ
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={`/order/new?master=${master.id}`}>Полная форма</Link>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -184,6 +199,15 @@ export function MasterProfilePage({ masterId }: MasterProfilePageProps) {
           </div>
         )}
       </section>
+
+      <OrderFormDialog
+        open={orderDialogOpen}
+        onOpenChange={setOrderDialogOpen}
+        mode="create"
+        masterId={masterId}
+        sessionUserId={user?.id}
+        onSuccess={(order) => router.push(`/order/${order.id}`)}
+      />
     </div>
   );
 }

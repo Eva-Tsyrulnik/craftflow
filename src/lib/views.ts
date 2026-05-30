@@ -23,6 +23,7 @@ export interface OrderCard {
   status: OrderStatus;
   budget: number;
   deadline: string;
+  deadlineRaw: string;
   description?: string;
 }
 
@@ -69,6 +70,7 @@ export function mapOrderRow(
     status: row.status,
     budget: row.budget,
     deadline: new Date(row.deadline).toLocaleDateString("ru-RU"),
+    deadlineRaw: row.deadline,
     description: row.description,
   };
 }

@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DEFAULT_AUTH_REDIRECT } from "@/lib/auth-routes";
 import { getAppUrl } from "@/lib/env";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabase } from "@/lib/supabase";
 
 export function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(
@@ -21,12 +21,18 @@ export function LoginPage() {
   );
   const [loading, setLoading] = useState(false);
 
+  function getRedirectTarget() {
+    const next = searchParams.get("next");
+    if (next && next.startsWith("/") && !next.startsWith("//")) return next;
+    return DEFAULT_AUTH_REDIRECT;
+  }
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await getSupabase().auth.signInWithPassword({
       email,
       password,
     });
@@ -38,14 +44,17 @@ export function LoginPage() {
       return;
     }
 
-    router.push("/catalog");
+    router.push(getRedirectTarget());
     router.refresh();
   }
 
   async function handleOAuth(provider: "google") {
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+    const next = getRedirectTarget();
+    const { error: oauthError } = await getSupabase().auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${getAppUrl()}/auth/callback` },
+      options: {
+        redirectTo: `${getAppUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
+      },
     });
     if (oauthError) setError(oauthError.message);
   }
@@ -55,7 +64,7 @@ export function LoginPage() {
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="font-display text-2xl">Вход</CardTitle>
-          <CardDescription>Войдите в CraftFlow</CardDescription>
+          <CardDescription>Email и пароль — §11.3 CraftFlow</CardDescription>
         </CardHeader>
         <CardContent>
           {error ? (
@@ -71,6 +80,7 @@ export function LoginPage() {
                 id="login-email"
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -82,6 +92,7 @@ export function LoginPage() {
                 id="login-password"
                 type="password"
                 required
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"

@@ -39,6 +39,22 @@ npx supabase db query --file supabase/sql/apply_schema.sql --linked
 
 После применения каталог читает `masters` из БД.
 
+Включить RLS по Product Book §10 (политики + helper-функции):
+
+```bash
+npm run db:rls
+```
+
+Скрипт: `supabase/sql/enable_rls.sql` — идемпотентный, можно запускать повторно.
+
+Если в браузере **permission denied for table masters** (или другой таблицы) после `apply_schema.sql` — не хватает `GRANT` для `anon` / `authenticated`:
+
+```bash
+npm run db:grants
+```
+
+Или в [SQL Editor](https://supabase.com/dashboard/project/uaheyneplvflwsyyfwhe/sql) выполните `supabase/sql/grant_api_roles.sql`.
+
 ## Демо-данные (seed из Auth)
 
 1. Зарегистрируйте **двух** пользователей в приложении (`/signup`) — заказчик и мастер.

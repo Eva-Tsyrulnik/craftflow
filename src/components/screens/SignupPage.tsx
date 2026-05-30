@@ -7,26 +7,41 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DEFAULT_AUTH_REDIRECT } from "@/lib/auth-routes";
 import { getAppUrl } from "@/lib/env";
-import { createClient } from "@/lib/supabase/client";
+import { getSupabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export function SignupPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [role, setRole] = useState<"client" | "master">("client");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
+
+    if (password !== confirmPassword) {
+      setError("Пароли не совпадают");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Пароль должен быть не короче 6 символов");
+      return;
+    }
+
     setLoading(true);
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await getSupabase().auth.signUp({
       email,
       password,
       options: {
@@ -41,17 +56,33 @@ export function SignupPage() {
       return;
     }
 
-    router.push(role === "master" ? "/onboarding" : "/catalog");
-    router.refresh();
+    if (data.session && data.user) {
+      const { error: profileError } = await getSupabase().from("users").upsert({
+        id: data.user.id,
+        name: name || email.split("@")[0],
+        role,
+      });
+
+      if (profileError) {
+        console.error(profileError);
+        toast.error(profileError.message);
+        return;
+      }
+
+      router.push(role === "master" ? "/onboarding" : DEFAULT_AUTH_REDIRECT);
+      router.refresh();
+      return;
+    }
+
+    setSuccess("Проверьте почту — мы отправили ссылку для подтверждения регистрации.");
   }
 
   async function handleOAuth(provider: "google") {
     setError(null);
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+    const { error: oauthError } = await getSupabase().auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${getAppUrl()}/auth/callback?next=${role === "master" ? "/onboarding" : "/catalog"}`,
-        queryParams: { role },
+        redirectTo: `${getAppUrl()}/auth/callback?next=${encodeURIComponent(role === "master" ? "/onboarding" : DEFAULT_AUTH_REDIRECT)}`,
       },
     });
     if (oauthError) setError(oauthError.message);
@@ -62,7 +93,7 @@ export function SignupPage() {
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="font-display text-2xl">Регистрация</CardTitle>
-          <CardDescription>Создайте аккаунт CraftFlow</CardDescription>
+          <CardDescription>Email, пароль и подтверждение</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs
@@ -82,6 +113,12 @@ export function SignupPage() {
             </p>
           ) : null}
 
+          {success ? (
+            <p className="mb-4 rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-sm text-foreground">
+              {success}
+            </p>
+          ) : null}
+
           <form className="space-y-4" onSubmit={handleSignup}>
             <div className="space-y-2">
               <Label htmlFor="name">Имя</Label>
@@ -98,6 +135,7 @@ export function SignupPage() {
                 id="email"
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -110,14 +148,28 @@ export function SignupPage() {
                 type="password"
                 required
                 minLength={6}
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Подтверждение пароля</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                required
+                minLength={6}
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || Boolean(success)}
               className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
             >
               {loading ? "Регистрация…" : "Зарегистрироваться"}
