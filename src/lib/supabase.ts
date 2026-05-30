@@ -30,15 +30,48 @@ function resolveConfig() {
   return { url, anonKey };
 }
 
-export function isSupabaseConfigured(): boolean {
-  const { url, anonKey } = resolveConfig();
-  if (!url || !anonKey || anonKey.length < 20) return false;
+function isValidAnonKey(key: string): boolean {
+  if (key.length < 20) return false;
+  // Legacy JWT (Dashboard → anon public)
+  if (key.startsWith("eyJ")) return true;
+  // Новые publishable keys Supabase
+  if (key.startsWith("sb_publishable_")) return true;
+  return false;
+}
+
+function isValidProjectUrl(url: string): boolean {
   try {
     const u = new URL(url);
     return u.protocol === "https:" && u.hostname.endsWith(".supabase.co");
   } catch {
     return false;
   }
+}
+
+export function isSupabaseConfigured(): boolean {
+  const { url, anonKey } = resolveConfig();
+  return isValidProjectUrl(url) && isValidAnonKey(anonKey);
+}
+
+/** Для баннера: что именно не так (без вывода секретов). */
+export function getSupabaseConfigHint(): string {
+  const { url, anonKey } = resolveConfig();
+  if (!url) {
+    return "NEXT_PUBLIC_SUPABASE_URL пустой на сервере. После добавления env в Vercel сделайте Redeploy без кэша.";
+  }
+  if (!isValidProjectUrl(url)) {
+    return "NEXT_PUBLIC_SUPABASE_URL должен быть https://xxxx.supabase.co (не postgres:// и без кавычек).";
+  }
+  if (!anonKey) {
+    return "NEXT_PUBLIC_SUPABASE_ANON_KEY пустой. Возьмите anon / publishable key в Supabase → Settings → API.";
+  }
+  if (anonKey.startsWith("sb_secret_")) {
+    return "В NEXT_PUBLIC_SUPABASE_ANON_KEY указан secret key — нужен anon / publishable, не service_role.";
+  }
+  if (!isValidAnonKey(anonKey)) {
+    return "NEXT_PUBLIC_SUPABASE_ANON_KEY слишком короткий или неверный формат.";
+  }
+  return "";
 }
 
 export function formatSupabaseNetworkError(error: unknown): string {

@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+
+/** Читать env на каждый запрос (Vercel), а не только из кэша build без переменных */
+export const dynamic = "force-dynamic";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
@@ -29,13 +32,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <body>
-        <SupabaseRootProvider
-          url={process.env.NEXT_PUBLIC_SUPABASE_URL}
-          anonKey={process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}
-        >
+        <SupabaseRootProvider url={supabaseUrl} anonKey={supabaseAnonKey}>
           <AppShell>{children}</AppShell>
           <Toaster position="top-center" />
         </SupabaseRootProvider>
