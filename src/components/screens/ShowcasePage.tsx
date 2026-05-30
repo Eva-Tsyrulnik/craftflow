@@ -8,7 +8,7 @@ import { ErrorState } from "@/components/shared/ErrorState";
 import { CatalogGridSkeleton } from "@/components/shared/ListSkeletons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getSupabase } from "@/lib/supabase";
+import { tryGetSupabase } from "@/lib/supabase";
 import { mapMasterRow, type MasterCard } from "@/lib/views";
 
 interface ShowcasePageProps {
@@ -29,7 +29,14 @@ export function ShowcasePage({ showcaseId }: ShowcasePageProps) {
     setError(null);
     setNotFoundFlag(false);
 
-    const { data, error: queryError } = await getSupabase()
+    const supabase = tryGetSupabase();
+    if (!supabase) {
+      setError("Supabase не настроен. Проверьте переменные окружения на Vercel.");
+      setLoading(false);
+      return;
+    }
+
+    const { data, error: queryError } = await supabase
       .from("orders")
       .select("title, description, reference_urls, masters(*, users(name))")
       .eq("id", showcaseId)

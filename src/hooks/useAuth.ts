@@ -2,14 +2,18 @@
 
 import type { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
-import { getSupabase } from "@/lib/supabase";
+import { tryGetSupabase } from "@/lib/supabase";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = getSupabase();
+    const supabase = tryGetSupabase();
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
 
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);

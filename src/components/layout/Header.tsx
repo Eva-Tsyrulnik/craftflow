@@ -14,7 +14,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
-import { getSupabase } from "@/lib/supabase";
+import { tryGetSupabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 const PUBLIC_LINKS = [
@@ -38,7 +38,7 @@ export function Header() {
     : PUBLIC_LINKS;
 
   async function handleSignOut() {
-    await getSupabase().auth.signOut();
+    await tryGetSupabase()?.auth.signOut();
     setOpen(false);
     router.push("/login");
     router.refresh();

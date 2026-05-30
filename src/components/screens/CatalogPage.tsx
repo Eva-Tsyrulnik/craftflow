@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { CATEGORY_LABELS, formatPrice, type MasterCategory } from "@/lib/constants";
-import { getSupabase } from "@/lib/supabase";
+import { tryGetSupabase } from "@/lib/supabase";
 import { mapMasterRow, type MasterCard } from "@/lib/views";
 
 const FILTER_CATEGORIES: (MasterCategory | "all")[] = [
@@ -35,7 +35,17 @@ export function CatalogPage() {
     setLoading(true);
     setError(null);
 
-    const { data, error: queryError } = await getSupabase()
+    const supabase = tryGetSupabase();
+    if (!supabase) {
+      setError(
+        "Supabase не настроен на сервере. Добавьте NEXT_PUBLIC_SUPABASE_* в Vercel и сделайте Redeploy."
+      );
+      setMasters([]);
+      setLoading(false);
+      return;
+    }
+
+    const { data, error: queryError } = await supabase
       .from("masters")
       .select("*, users(name)")
       .order("created_at", { ascending: false });

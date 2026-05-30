@@ -1,3 +1,4 @@
+import { SupabaseEnvBanner } from "@/components/shared/SupabaseEnvBanner";
 import { Header } from "./Header";
 
 interface AppShellProps {
@@ -7,6 +8,7 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-[#FAF8F5] flex flex-col">
+      <SupabaseEnvBanner />
       <Header />
       <main className="flex-1">{children}</main>
       <footer className="border-t border-[#E5E0D8] py-8 mt-16">
