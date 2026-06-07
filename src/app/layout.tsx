@@ -6,6 +6,10 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { SupabaseRootProvider } from "@/components/shared/SupabaseEnvBanner";
+import {
+  resolvePublicSupabaseAnonKey,
+  resolvePublicSupabaseUrl,
+} from "@/lib/craftflow-public-env";
 import { SupabaseRuntimeScript } from "@/components/shared/SupabaseRuntimeScript";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -33,8 +37,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+  const supabaseUrl = resolvePublicSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const supabaseAnonKey = resolvePublicSupabaseAnonKey(
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
 
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>

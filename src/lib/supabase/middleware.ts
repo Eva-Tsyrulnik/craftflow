@@ -7,13 +7,14 @@ import {
 } from "@/lib/auth-routes";
 
 import {
-  isValidSupabaseProjectUrl,
-  normalizeSupabaseProjectUrl,
-} from "@/lib/supabase-url";
+  resolvePublicSupabaseAnonKey,
+  resolvePublicSupabaseUrl,
+} from "@/lib/craftflow-public-env";
+import { isValidSupabaseProjectUrl } from "@/lib/supabase-url";
 
 function getMiddlewareEnv() {
-  const url = normalizeSupabaseProjectUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "");
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  const url = resolvePublicSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const key = resolvePublicSupabaseAnonKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   if (!url || !key || !isValidSupabaseProjectUrl(url)) return null;
   return { url, key };
 }

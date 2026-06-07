@@ -1,29 +1,13 @@
-function trimEnv(v: string | undefined): string {
-  if (!v) return "";
-  return v.trim().replace(/^["']|["']$/g, "");
-}
+import { resolvePublicAppUrl } from "@/lib/craftflow-public-env";
 
 /**
  * Базовый URL приложения для OAuth redirectTo (абсолютный, без завершающего /).
- * На Vercel: NEXT_PUBLIC_APP_URL или автоматически VERCEL_URL.
  */
 export function getAppUrl(): string {
-  const raw =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.NEXT_PUBLIC_VERCEL_URL ??
-    process.env.VERCEL_URL ??
-    "http://localhost:3000";
-
-  let url = trimEnv(raw);
-  if (!url) {
+  if (process.env.NODE_ENV === "development" && !process.env.NEXT_PUBLIC_APP_URL) {
     return "http://localhost:3000";
   }
-
-  if (!/^https?:\/\//i.test(url)) {
-    url = `https://${url}`;
-  }
-
-  return url.replace(/\/$/, "");
+  return resolvePublicAppUrl();
 }
 
 export function getSupabaseUrl(): string {

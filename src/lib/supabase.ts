@@ -2,6 +2,10 @@ import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import {
+  resolvePublicSupabaseAnonKey,
+  resolvePublicSupabaseUrl,
+} from "@/lib/craftflow-public-env";
+import {
   getSupabaseUrlHint,
   isValidSupabaseProjectUrl,
   normalizeSupabaseProjectUrl,
@@ -44,16 +48,11 @@ function readWindowEnv(): { url: string; anonKey: string } {
 
 function resolveConfig() {
   const fromWindow = readWindowEnv();
-  const url = normalizeSupabaseProjectUrl(
-    runtimeUrl ||
-      fromWindow.url ||
-      process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      ""
+  const url = resolvePublicSupabaseUrl(
+    runtimeUrl || fromWindow.url || process.env.NEXT_PUBLIC_SUPABASE_URL
   );
-  const anonKey = trimEnv(
-    runtimeAnonKey ||
-      fromWindow.anonKey ||
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const anonKey = resolvePublicSupabaseAnonKey(
+    runtimeAnonKey || fromWindow.anonKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
   return { url, anonKey };
 }
