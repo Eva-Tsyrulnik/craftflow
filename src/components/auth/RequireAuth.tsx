@@ -3,25 +3,30 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { CatalogGridSkeleton } from "@/components/shared/ListSkeletons";
-import { DEFAULT_AUTH_REDIRECT } from "@/lib/auth-routes";
+import {
+  DEFAULT_AUTH_REDIRECT,
+  getLoginPath,
+} from "@/lib/auth-routes";
 import { useAuth } from "@/hooks/useAuth";
 
 interface RequireAuthProps {
   children: React.ReactNode;
+  loginPath?: string;
 }
 
-export function RequireAuth({ children }: RequireAuthProps) {
+export function RequireAuth({ children, loginPath }: RequireAuthProps) {
   const router = useRouter();
   const { user, loading } = useAuth();
 
   useEffect(() => {
     if (!loading && !user) {
-      const next = encodeURIComponent(
-        typeof window !== "undefined" ? window.location.pathname : DEFAULT_AUTH_REDIRECT
-      );
-      router.replace(`/login?next=${next}`);
+      const pathname =
+        typeof window !== "undefined" ? window.location.pathname : DEFAULT_AUTH_REDIRECT;
+      const login = loginPath ?? getLoginPath(pathname);
+      const next = encodeURIComponent(pathname);
+      router.replace(`${login}?next=${next}`);
     }
-  }, [loading, user, router]);
+  }, [loading, user, router, loginPath]);
 
   if (loading) {
     return (

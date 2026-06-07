@@ -11,7 +11,17 @@ import { DEFAULT_AUTH_REDIRECT } from "@/lib/auth-routes";
 import { getAppUrl } from "@/lib/env";
 import { formatSupabaseNetworkError, tryGetSupabase } from "@/lib/supabase";
 
-export function LoginPage() {
+type LoginPageProps = {
+  defaultRedirect?: string;
+  signupHref?: string;
+  compact?: boolean;
+};
+
+export function LoginPage({
+  defaultRedirect = DEFAULT_AUTH_REDIRECT,
+  signupHref = "/signup",
+  compact = false,
+}: LoginPageProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -24,7 +34,7 @@ export function LoginPage() {
   function getRedirectTarget() {
     const next = searchParams.get("next");
     if (next && next.startsWith("/") && !next.startsWith("//")) return next;
-    return DEFAULT_AUTH_REDIRECT;
+    return defaultRedirect;
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -141,7 +151,7 @@ export function LoginPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Нет аккаунта?{" "}
-            <Link href="/signup" className="text-accent hover:underline">
+            <Link href={signupHref} className="text-accent hover:underline">
               Регистрация
             </Link>
           </p>

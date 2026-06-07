@@ -2,6 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   DEFAULT_AUTH_REDIRECT,
+  TG_DEFAULT_AUTH_REDIRECT,
+  getLoginPath,
   isAuthPath,
   isProtectedPath,
 } from "@/lib/auth-routes";
@@ -62,7 +64,7 @@ export async function updateSession(request: NextRequest) {
 
     if (!user && isProtectedPath(pathname)) {
       const url = request.nextUrl.clone();
-      url.pathname = "/login";
+      url.pathname = getLoginPath(pathname);
       url.searchParams.set("next", pathname);
       return withSessionCookies(NextResponse.redirect(url), supabaseResponse);
     }
@@ -70,10 +72,13 @@ export async function updateSession(request: NextRequest) {
     if (user && isAuthPath(pathname)) {
       const url = request.nextUrl.clone();
       const next = url.searchParams.get("next");
+      const fallback = pathname.startsWith("/tg")
+        ? TG_DEFAULT_AUTH_REDIRECT
+        : DEFAULT_AUTH_REDIRECT;
       url.pathname =
         next && next.startsWith("/") && !next.startsWith("//")
           ? next
-          : DEFAULT_AUTH_REDIRECT;
+          : fallback;
       url.search = "";
       return withSessionCookies(NextResponse.redirect(url), supabaseResponse);
     }

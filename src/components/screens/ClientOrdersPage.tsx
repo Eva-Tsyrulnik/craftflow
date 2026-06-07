@@ -18,18 +18,25 @@ import { getSupabase } from "@/lib/supabase";
 import { mapOrderRow, type OrderCard } from "@/lib/views";
 import { useAuth } from "@/hooks/useAuth";
 
+type ClientOrdersPageProps = {
+  routePrefix?: string;
+  compact?: boolean;
+};
+
 function OrderList({
   orders,
   filter,
   loading,
   onEdit,
   onDelete,
+  routePrefix = "",
 }: {
   orders: OrderCard[];
   filter: "active" | "completed";
   loading: boolean;
   onEdit: (order: OrderCard) => void;
   onDelete: (order: OrderCard) => void;
+  routePrefix?: string;
 }) {
   if (loading) {
     return <OrderCardsSkeleton count={3} />;
@@ -74,7 +81,7 @@ function OrderList({
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <Link href={`/order/${order.id}`}>Открыть заказ</Link>
+                <Link href={`${routePrefix}/order/${order.id}`}>Открыть заказ</Link>
               </Button>
               {order.status === "pending" ? (
                 <>
@@ -99,7 +106,10 @@ function OrderList({
   );
 }
 
-export function ClientOrdersPage() {
+export function ClientOrdersPage({
+  routePrefix = "",
+  compact = false,
+}: ClientOrdersPageProps = {}) {
   const { user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<OrderCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,16 +165,20 @@ export function ClientOrdersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-      <PageHeading
-        title="Мои заказы"
-        description="Активные и завершённые заказы заказчика"
-      />
+    <div className={compact ? "mx-auto max-w-lg px-4 py-5" : "mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8"}>
+      {compact ? (
+        <h1 className="mb-4 font-display text-xl font-bold text-primary">Мои заказы</h1>
+      ) : (
+        <PageHeading
+          title="Мои заказы"
+          description="Активные и завершённые заказы заказчика"
+        />
+      )}
 
       {!authLoading && !user ? (
         <EmptyState description="Войдите в аккаунт, чтобы видеть свои заказы.">
           <Button asChild className="mt-4 bg-accent text-accent-foreground hover:bg-accent/90">
-            <Link href="/login">Войти</Link>
+            <Link href={routePrefix ? `${routePrefix}/login` : "/login"}>Войти</Link>
           </Button>
         </EmptyState>
       ) : error ? (
@@ -194,6 +208,7 @@ export function ClientOrdersPage() {
               loading={loading || authLoading}
               onEdit={setEditOrder}
               onDelete={setDeleteOrder}
+              routePrefix={routePrefix}
             />
           </TabsContent>
           <TabsContent value="completed">
@@ -203,6 +218,7 @@ export function ClientOrdersPage() {
               loading={loading || authLoading}
               onEdit={setEditOrder}
               onDelete={setDeleteOrder}
+              routePrefix={routePrefix}
             />
           </TabsContent>
         </Tabs>

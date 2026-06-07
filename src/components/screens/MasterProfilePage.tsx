@@ -20,9 +20,11 @@ import { mapMasterRow, type MasterCard, type ReviewView } from "@/lib/views";
 
 interface MasterProfilePageProps {
   masterId: string;
+  /** В Mini App полная форма заказа открывается на web */
+  webOrderHref?: string;
 }
 
-export function MasterProfilePage({ masterId }: MasterProfilePageProps) {
+export function MasterProfilePage({ masterId, webOrderHref }: MasterProfilePageProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
@@ -143,7 +145,9 @@ export function MasterProfilePage({ masterId }: MasterProfilePageProps) {
               Быстрый заказ
             </Button>
             <Button asChild variant="outline">
-              <Link href={`/order/new?master=${master.id}`}>Полная форма</Link>
+              <Link href={webOrderHref ?? `/order/new?master=${master.id}`}>
+                {webOrderHref ? "Полная форма на сайте" : "Полная форма"}
+              </Link>
             </Button>
           </div>
         </div>

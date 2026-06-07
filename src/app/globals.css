@@ -86,6 +86,10 @@ a {
   text-decoration: none;
 }
 
+.tg-mini-app {
+  padding-top: env(safe-area-inset-top);
+}
+
 /* ── Декоративный фон (круги, цветы, звёзды) ───────────────────────── */
 .bg-craft-pattern {
   background-color: var(--cf-bg);

@@ -25,12 +25,24 @@ const FILTER_CATEGORIES: (MasterCategory | "all")[] = [
   "sculpture",
 ];
 
-export function CatalogPage() {
+type CatalogPageProps = {
+  routePrefix?: string;
+  compact?: boolean;
+  initialCategory?: MasterCategory | "all";
+  maxBudget?: number;
+};
+
+export function CatalogPage({
+  routePrefix = "",
+  compact = false,
+  initialCategory = "all",
+  maxBudget,
+}: CatalogPageProps = {}) {
   const [masters, setMasters] = useState<MasterCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<MasterCategory | "all">("all");
+  const [category, setCategory] = useState<MasterCategory | "all">(initialCategory);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,22 +90,31 @@ export function CatalogPage() {
   const filtered = useMemo(() => {
     return masters.filter((m) => {
       const matchCat = category === "all" || m.categories.includes(category);
+      const matchBudget = maxBudget == null || m.priceFrom <= maxBudget;
       const matchSearch =
         search === "" ||
         m.name.toLowerCase().includes(search.toLowerCase()) ||
         m.bio.toLowerCase().includes(search.toLowerCase());
-      return matchCat && matchSearch;
+      return matchCat && matchBudget && matchSearch;
     });
-  }, [masters, search, category]);
+  }, [masters, search, category, maxBudget]);
 
-  return (
-    <div className="relative min-h-full overflow-hidden">
-      <HeroBackground overlayClassName="bg-background/60" />
-      <div className="relative z-10 mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <PageHeading
-        title="Каталог мастеров"
-        description="Мастера из Supabase — обновите страницу после добавления записи в Dashboard"
-      />
+  const content = (
+    <>
+      {!compact && (
+        <PageHeading
+          title="Каталог мастеров"
+          description="Мастера из Supabase — обновите страницу после добавления записи в Dashboard"
+        />
+      )}
+      {compact && (
+        <div className="mb-4">
+          <h1 className="font-display text-xl font-bold text-primary">Каталог</h1>
+          {maxBudget != null && (
+            <p className="text-sm text-muted-foreground">Бюджет до {maxBudget.toLocaleString("ru-RU")} ₽</p>
+          )}
+        </div>
+      )}
 
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center">
         <Input
@@ -131,9 +152,12 @@ export function CatalogPage() {
       ) : filtered.length === 0 ? (
         <EmptyState description="Добавьте мастера в Supabase или измените фильтры." />
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className={compact ? "grid gap-3" : "grid gap-6 sm:grid-cols-2 lg:grid-cols-3"}>
           {filtered.map((master) => (
-            <Card key={master.id} className="flex flex-col">
+            <Card
+              key={master.id}
+              className={compact ? "flex flex-col border-border/80 bg-background/90" : "flex flex-col"}
+            >
               <CardHeader className="flex flex-row items-start gap-4 space-y-0">
                 <Avatar className="size-12">
                   <AvatarFallback className="bg-accent/20 text-primary">
@@ -170,13 +194,25 @@ export function CatalogPage() {
               </CardContent>
               <CardFooter>
                 <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                  <Link href={`/master/${master.id}`}>Профиль</Link>
+                  <Link href={`${routePrefix}/master/${master.id}`}>Профиль</Link>
                 </Button>
               </CardFooter>
             </Card>
           ))}
         </div>
       )}
+    </>
+  );
+
+  if (compact) {
+    return <div className="mx-auto max-w-lg px-4 py-5">{content}</div>;
+  }
+
+  return (
+    <div className="relative min-h-full overflow-hidden">
+      <HeroBackground overlayClassName="bg-background/60" />
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        {content}
       </div>
     </div>
   );
