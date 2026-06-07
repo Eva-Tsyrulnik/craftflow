@@ -32,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { StageStatus } from "@/lib/database.types";
 import { getSupabase } from "@/lib/supabase";
 import { stageUpdateSchema, type StageUpdateValues } from "@/lib/validations/orders";
+import { notifyOrderEvent } from "@/lib/telegram/client-notify";
 import type { OrderStageView } from "@/lib/views";
 
 const STATUS_LABELS: Record<StageStatus, string> = {
@@ -95,6 +96,17 @@ export function StageUpdateDialog({
       status: data.status,
       sortOrder: data.sort_order,
     });
+
+    const event =
+      values.status === "submitted"
+        ? "stage_submitted"
+        : values.status === "approved"
+          ? "stage_approved"
+          : values.status === "revision"
+            ? "stage_revision"
+            : "stage_updated";
+    notifyOrderEvent(orderId, event, { stageName: data.name });
+
     onOpenChange(false);
   }
 

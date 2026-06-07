@@ -337,7 +337,12 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      tg_notify_recipients: {
+        Args: { p_order_id: string; p_actor_id: string };
+        Returns: { telegram_id: number }[];
+      };
+    };
     Enums: {
       user_role: UserRole;
       order_status: OrderStatus;

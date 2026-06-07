@@ -17,6 +17,7 @@ import { getAuthUserId } from "@/lib/actor";
 import { requireAuthUserId } from "@/lib/auth-guard";
 import { useAuth } from "@/hooks/useAuth";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
+import { notifyOrderEvent } from "@/lib/telegram/client-notify";
 import { getSupabase } from "@/lib/supabase";
 import type { MessageView, OrderStageView } from "@/lib/views";
 import { cn } from "@/lib/utils";
@@ -223,6 +224,7 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
     }
 
     setStatus("in_progress");
+    notifyOrderEvent(orderId, "stage_revision", { stageName: submittedStage.name });
     toast.success("Сохранено");
   }
 
@@ -247,6 +249,7 @@ export function OrderDetailPage({ orderId }: OrderDetailPageProps) {
     }
 
     setStatus("review");
+    notifyOrderEvent(orderId, "stage_submitted", { stageName: target.name });
     toast.success("Сохранено");
   }
 

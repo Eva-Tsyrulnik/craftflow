@@ -45,3 +45,14 @@ export function resolvePublicAppUrl(): string {
   }
   return url.replace(/\/$/, "");
 }
+
+export function resolveTgMiniAppUrl(): string {
+  const raw =
+    trim(process.env.NEXT_PUBLIC_TG_MINI_APP_URL) ||
+    `${resolvePublicAppUrl()}/tg`;
+  let url = raw;
+  if (!/^https?:\/\//i.test(url)) {
+    url = `https://${url}`;
+  }
+  return url.replace(/\/$/, "");
+}

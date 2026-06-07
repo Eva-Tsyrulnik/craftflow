@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ORDER_STATUS_LABELS, formatPrice } from "@/lib/constants";
 import { buildDefaultStageRows } from "@/lib/order-stages";
+import { notifyOrderEvent } from "@/lib/telegram/client-notify";
 import { getSupabase } from "@/lib/supabase";
 import { mapOrderRow, type OrderCard } from "@/lib/views";
 import { useAuth } from "@/hooks/useAuth";
@@ -142,6 +143,7 @@ export function MasterDashboardPage() {
 
     toast.success("Сохранено");
     setOrders((prev) => prev.map((o) => (o.id === orderId ? mapOrderRow(data) : o)));
+    notifyOrderEvent(orderId, "order_accepted");
   }
 
   function handleOrderCancelled(orderId: string) {
