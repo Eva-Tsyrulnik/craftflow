@@ -6,6 +6,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { SupabaseRootProvider } from "@/components/shared/SupabaseEnvBanner";
+import { SupabaseRuntimeScript } from "@/components/shared/SupabaseRuntimeScript";
 import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
@@ -38,6 +39,7 @@ export default function RootLayout({
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <body>
+        <SupabaseRuntimeScript url={supabaseUrl} anonKey={supabaseAnonKey} />
         <SupabaseRootProvider url={supabaseUrl} anonKey={supabaseAnonKey}>
           <AppShell>{children}</AppShell>
           <Toaster position="top-center" />

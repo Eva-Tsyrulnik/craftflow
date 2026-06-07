@@ -13,7 +13,8 @@
     "db:auth-users": "supabase db query --file supabase/sql/list_auth_users.sql --linked",
     "db:rls": "supabase db query --file supabase/sql/enable_rls.sql --linked",
     "db:grants": "supabase db query --file supabase/sql/grant_api_roles.sql --linked",
-    "hero:assets": "node scripts/process-hero.mjs"
+    "hero:assets": "node scripts/process-hero.mjs",
+    "vercel:env": "powershell -ExecutionPolicy Bypass -File scripts/sync-vercel-env.ps1"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

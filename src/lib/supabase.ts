@@ -28,11 +28,33 @@ export function applySupabaseEnv(url?: string, anonKey?: string) {
 
 export { normalizeSupabaseProjectUrl } from "@/lib/supabase-url";
 
+function readWindowEnv(): { url: string; anonKey: string } {
+  if (typeof window === "undefined") {
+    return { url: "", anonKey: "" };
+  }
+  const raw = window.__CF_SUPABASE__;
+  if (!raw || typeof raw !== "object") {
+    return { url: "", anonKey: "" };
+  }
+  return {
+    url: trimEnv(typeof raw.u === "string" ? raw.u : ""),
+    anonKey: trimEnv(typeof raw.k === "string" ? raw.k : ""),
+  };
+}
+
 function resolveConfig() {
+  const fromWindow = readWindowEnv();
   const url = normalizeSupabaseProjectUrl(
-    runtimeUrl || process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+    runtimeUrl ||
+      fromWindow.url ||
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      ""
   );
-  const anonKey = trimEnv(runtimeAnonKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  const anonKey = trimEnv(
+    runtimeAnonKey ||
+      fromWindow.anonKey ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
   return { url, anonKey };
 }
 
@@ -71,7 +93,7 @@ export function getSupabaseConfigHint(): string {
 
 export function formatSupabaseNetworkError(error: unknown): string {
   if (error instanceof TypeError && error.message === "Failed to fetch") {
-    return "Нет связи с Supabase: проверьте URL (https://….supabase.co), интернет и статус проекта в Dashboard.";
+    return "Нет связи с Supabase. Частая причина — проект приостановлен (бесплатный тариф): Dashboard → Restore project. Также проверьте URL (https://….supabase.co) и env в Vercel.";
   }
   return error instanceof Error ? error.message : "Ошибка сети";
 }

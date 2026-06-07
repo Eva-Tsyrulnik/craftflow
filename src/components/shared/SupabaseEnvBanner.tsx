@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useLayoutEffect, useSyncExternalStore } from "react";
 import {
   applySupabaseEnv,
   getSupabaseConfigHint,
@@ -17,6 +17,11 @@ export function SupabaseRootProvider({
   children: React.ReactNode;
 }) {
   applySupabaseEnv(url, anonKey);
+
+  useLayoutEffect(() => {
+    applySupabaseEnv(url, anonKey);
+  }, [url, anonKey]);
+
   return <>{children}</>;
 }
 
